@@ -1,9 +1,9 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { ethers } from "ethers";
+import { getDefaultProvider, ethers } from "ethers";
 import Web3 from 'web3';
 import { Fragment, useState, useEffect } from 'react';
-import { Grid, GridItem } from '@chakra-ui/react'
+import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image  } from '@chakra-ui/react'
 import { create as ipfsHttpClient } from 'ipfs-http-client'
 import abi from "../abi/Donation.json";
 const projectId = '2J5pUVzx4zKsQTgwnAYsE6MVObL'
@@ -19,8 +19,13 @@ const client = ipfsHttpClient({
   }
 })
 export default function Home() {
+  const appid = 43113;
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpen = () => setIsOpen(true);
   const [newtitle, setNewtitle] = useState('');
+  const [networkid, setNid] = useState('');
   const [newPostimg, setPostimg] = useState(null);
+  const [changed, setChanged] = useState(false);
   const [error, setError] = useState(null);
   const [newDesc, setNewdesc] = useState('');
   const [newMax, setNewmax] = useState('');
@@ -39,26 +44,99 @@ export default function Home() {
   const [allPosts, setPosts] = useState([]);
   const [allDonors, setDonors] = useState([]);
   const [dateNow, setDatenow] = useState(null);
-  const contractAddress = "0x34eE5e12e68367AA06c93c0d44E440769620112A";
+  const contractAddress = "0x15A2aEC6308E2b5E21b4c7bBFB3eDe6A2043e835";
   const contractABI = abi.abi;
   useEffect(() => {
     connect()
       .then(() => {
         if (address) {
-          syncD();
+          // setDatenow(new Date())
+          const intervalId = setInterval(() => {
+            setDatenow(new Date());
+          }, 1000);
+          detectNetwork1(false);
+          return () => clearInterval(intervalId);
+          
         }
       });
 
-  }, [address]);
+  }, [address, dateNow, networkid]);
   useEffect(() => {
     connect()
       .then(() => {
-        if (address) {
-          setDatenow(new Date())
+        if (address && networkid == appid) {
+          syncD();
+          
         }
       });
 
-  }, [address, dateNow]);
+  }, [address, networkid]);
+  
+  async function detectNetwork1(rload) {
+    try{
+      const provider = new ethers.providers.Web3Provider(ethereum);
+          const { chainId } = await provider.getNetwork()
+          if (chainId != appid) {
+            if(changed == false){
+              detectNetwork(rload);
+              setChanged(true)
+            }
+          }
+          else{
+            setNid(chainId);
+            setChanged(false);
+          }
+    }
+    catch(err){
+
+    }
+    
+
+  }
+  async function detectNetwork(rload) {
+    try {
+      console.log(networkid)
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const { chainId } = await provider.getNetwork()
+      if (chainId != appid) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: Web3.utils.toHex(appid) }]
+          }).then(() => {
+            if(rload == true){
+              window.location.reload();
+            }
+          });
+          
+        } catch (err) {
+            // This error code indicates that the chain has not been added to MetaMask
+          if (err.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainName: 'Avalanche Testnet C-Chain',
+                  chainId: Web3.utils.toHex(appid),
+                  nativeCurrency: { name: 'Avalanche', decimals: 18, symbol: 'AVAX' },
+                  rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+                  blockExplorerUrls: ['https://testnet.snowtrace.io/']
+                }
+              ]
+            }).then(() => {
+              if(rload == true){
+                window.location.reload();
+              }
+            });
+          }
+        }
+      }
+      setNid(chainId);
+      console.log(networkid);
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
   const connect = async () => {
     const ethereum = window.ethereum;
 
@@ -108,7 +186,7 @@ export default function Home() {
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
       const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-      const waveTxn = await dcontract.createpost(newtitle, newPostimg, Web3.utils.asciiToHex(newDesc), parseInt(newMax), url, parseInt(Web3.utils.toWei(newRewardv, "ether")), { gasLimit: 3000000});
+      const waveTxn = await dcontract.createpost(newtitle, newPostimg, Web3.utils.asciiToHex(newDesc), parseInt(newMax), url, Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newRewardv, 'ether')), 64), { gasLimit: 800000});
       await waveTxn.wait();
       syncD();
     } catch (error) {
@@ -141,6 +219,10 @@ export default function Home() {
   };
   const getRealtime = async () => {
     setRealtime(new Date(blockTime * 1000).toString());
+  };
+  const reloadaja = async () => {
+    await detectNetwork(true);
+    console.log("triggered")
   };
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
@@ -208,13 +290,17 @@ export default function Home() {
   };
   return (
     <div>
+    
+    {networkid == appid && (
+    <div>
     <Head>
       <title>Donation DAPP</title>
     </Head>
-    <div>
-      <h1 className="text-3xl font-bold underline">
+    <h1 className="text-3xl font-bold underline">
         Donation DAPP
       </h1>
+      <Button onClick={handleOpen}>Open Modal</Button>
+      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={reloadaja}>Reload</button>
       <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="Title" onChange={e => setNewtitle(e.target.value)} /><br></br>
       <input type="file" onChange={handleFileChange} /><br></br>
       {error && <p style={{ color: "red" }}>{error}</p>}
@@ -279,20 +365,57 @@ export default function Home() {
           })}
       </tbody>
     </table>
-    <Grid templateColumns='repeat(5, 1fr)' gap={6} w = "50%">
+    <ChakraProvider>
+    <Grid templateColumns='repeat(5, 1fr)' gap={3} w = "100%">
     {allPosts.map((post, i) => {
             return (
               <Link href= {`/${i}`} key={i}>
-              <GridItem w='100%' h={"-webkit-fit-content"} bg='silver'>
-                <img className="rounded mt-4" width="350" src={post.imgurl} />
+              <GridItem borderRadius ="md" boxSize="-moz-min-content" bg='silver'>
+                <Image
+                  boxSize="-webkit-fit-content"
+                  objectFit="contain"
+                  src={post.imgurl}
+                  alt={post.title}
+                  borderRadius ="md"
+                />
                 <p>{post.title}</p>
                 <pre>{Web3.utils.hexToAscii(post.desc)}</pre>
                 <p>Posted {Math.floor((((dateNow - new Date(post.posttime * 1000))/ 1000)/ 60)).toString()} minutes ago</p>
               </GridItem>
               </Link>)
           })}
-    </Grid>
-    </div>
+    </Grid> 
+    </ChakraProvider>
+    <ChakraProvider>
+    <Modal isOpen={isOpen}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Error</ModalHeader>
+          <ModalBody>
+            Please stay in Avalanche Network
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={reloadaja}>
+              Switch Network
+            </Button>
+            <Button variant="ghost">Secondary Action</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      </ChakraProvider></div>)}
+    {networkid != appid && (
+      <div>
+      <Head>
+        <title>Swithing Network</title>
+      </Head>
+      <div>
+        <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
+        
+      </div>
+      </div>
+    )}
+      
     </div>
   )
 }
