@@ -1,11 +1,13 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import Dropdown from "react-bootstrap/Dropdown";
 import { getDefaultProvider, ethers } from "ethers";
 import Web3 from 'web3';
+import {connectD, fetchD, detectNetwork1} from "../services/aio";
 import { Fragment, useState, useEffect } from 'react';
-import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image  } from '@chakra-ui/react'
+import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image, Select  } from '@chakra-ui/react'
 import { create as ipfsHttpClient } from 'ipfs-http-client'
-import abi from "../abi/Donation.json";
+
 const projectId = '2J5pUVzx4zKsQTgwnAYsE6MVObL'
 const projectSecret = 'f41fe913f0ae1ea7c45c0d36caace45a'
 const auth = 'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
@@ -18,14 +20,14 @@ const client = ipfsHttpClient({
     authorization: auth
   }
 })
-export default function Home() {
-  const appid = 43113;
+export default function Home({connect, address, syncW}) {
+  
   const [isOpen, setIsOpen] = useState(false);
   const handleOpen = () => setIsOpen(true);
   const [newtitle, setNewtitle] = useState('');
-  const [networkid, setNid] = useState('');
+  
   const [newPostimg, setPostimg] = useState(null);
-  const [changed, setChanged] = useState(false);
+  
   const [error, setError] = useState(null);
   const [newDesc, setNewdesc] = useState('');
   const [newMax, setNewmax] = useState('');
@@ -37,15 +39,16 @@ export default function Home() {
   const [veth, setVeth] = useState('');
   const [PID, setPID] = useState('');
   const [PID1, setPID1] = useState('');
-  const [address, setAddress] = useState('');
   const [addressP, setAddressp] = useState('');
   const [blockTime, setBlocktime] = useState('');
   const [realTime, setRealtime] = useState('');
+  const [filterC, setFilterC] = useState('option1');
   const [allPosts, setPosts] = useState([]);
+  const [myPosts, setMyposts] = useState(0);
+  const [rewardId, setRewardid] = useState([]);
   const [allDonors, setDonors] = useState([]);
   const [dateNow, setDatenow] = useState(null);
-  const contractAddress = "0x15A2aEC6308E2b5E21b4c7bBFB3eDe6A2043e835";
-  const contractABI = abi.abi;
+  const [sortedTrans, setSortedTrans] = useState([]);
   useEffect(() => {
     connect()
       .then(() => {
@@ -54,104 +57,26 @@ export default function Home() {
           const intervalId = setInterval(() => {
             setDatenow(new Date());
           }, 1000);
-          detectNetwork1(false);
           return () => clearInterval(intervalId);
           
         }
       });
 
-  }, [address, dateNow, networkid]);
+  }, [address, dateNow]);
   useEffect(() => {
     connect()
       .then(() => {
-        if (address && networkid == appid) {
+        if (address) {
           syncD();
           
         }
       });
 
-  }, [address, networkid]);
+  }, [address]);
   
-  async function detectNetwork1(rload) {
-    try{
-      const provider = new ethers.providers.Web3Provider(ethereum);
-          const { chainId } = await provider.getNetwork()
-          if (chainId != appid) {
-            if(changed == false){
-              detectNetwork(rload);
-              setChanged(true)
-            }
-          }
-          else{
-            setNid(chainId);
-            setChanged(false);
-          }
-    }
-    catch(err){
-
-    }
-    
-
-  }
-  async function detectNetwork(rload) {
-    try {
-      console.log(networkid)
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const { chainId } = await provider.getNetwork()
-      if (chainId != appid) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: Web3.utils.toHex(appid) }]
-          }).then(() => {
-            if(rload == true){
-              window.location.reload();
-            }
-          });
-          
-        } catch (err) {
-            // This error code indicates that the chain has not been added to MetaMask
-          if (err.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [
-                {
-                  chainName: 'Avalanche Testnet C-Chain',
-                  chainId: Web3.utils.toHex(appid),
-                  nativeCurrency: { name: 'Avalanche', decimals: 18, symbol: 'AVAX' },
-                  rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
-                  blockExplorerUrls: ['https://testnet.snowtrace.io/']
-                }
-              ]
-            }).then(() => {
-              if(rload == true){
-                window.location.reload();
-              }
-            });
-          }
-        }
-      }
-      setNid(chainId);
-      console.log(networkid);
-    } catch (err) {
-      console.log(err.message);
-    }
-  }
-  const connect = async () => {
-    const ethereum = window.ethereum;
-
-    if (!ethereum) {
-      alert('Install MetaMask');
-      return;
-    }
-
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    const address = accounts[0];
-
-    // sign hashed message
-    
-    setAddress(address);
-  }
+  
+  
+  
   const donateNow = async () => {
     await connect();
     const ethereum = window.ethereum;
@@ -195,14 +120,29 @@ export default function Home() {
     
   };
   const syncD = async () => {
-    const ethereum = window.ethereum;
     if (!address) {
       return;
     }
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
-    const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-    const waveTxn = await dcontract.syncdonation({ gasLimit: 300000});
+    const {waveTxn} = await syncW();
+    var trans = [];
+    const wavesCleaned = waveTxn.map(post => {
+      const wavesaja = post.transactions.map(donor => {
+        return trans.push({
+          donors: donor.donors,
+          donortime: donor.donortime,
+          valueofdonors: Number(Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex))))
+        });
+      });
+    });
+    trans = trans.sort((a, b) => {
+      if (a.valueofdonors > b.valueofdonors) {
+        return -1;
+      }
+    });
+    const uniqueData = trans.filter((value, index, self) => {
+      return self.findIndex(v => v.donors === value.donors) === index;
+    });
+    setSortedTrans(uniqueData);
     setPosts(waveTxn);
   };
   const getTrans = async () => {
@@ -219,10 +159,6 @@ export default function Home() {
   };
   const getRealtime = async () => {
     setRealtime(new Date(blockTime * 1000).toString());
-  };
-  const reloadaja = async () => {
-    await detectNetwork(true);
-    console.log("triggered")
   };
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
@@ -288,34 +224,23 @@ export default function Home() {
       setError1(`Error uploading file: ${error}`);
     }
   };
+  const cobain = async (e) =>{
+    console.log()
+  }
+  const seconds = (posttime) => {
+    return (((dateNow - new Date(posttime * 1000))/ 1000)/ 60);
+  };
   return (
     <div>
-    
-    {networkid == appid && (
-    <div>
+    <div className='container-fluid'>
     <Head>
       <title>Donation DAPP</title>
     </Head>
-    <h1 className="text-3xl font-bold underline">
-        Donation DAPP
-      </h1>
-      <Button onClick={handleOpen}>Open Modal</Button>
-      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={reloadaja}>Reload</button>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="Title" onChange={e => setNewtitle(e.target.value)} /><br></br>
-      <input type="file" onChange={handleFileChange} /><br></br>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {
-          newPostimg && (
-            <img className="rounded mt-4" width="350" src={newPostimg} />
-          )
-        }
-      <textarea
-        className="pt-4 rounded bg-gray-100 px-3 py-2 my-2"
-        placeholder="desc"
-        onChange={e => setNewdesc(e.target.value)}
-        rows={10}
-        cols={30}
-      /><br></br>
+      {/* {rewardId.map((rid, i) => {
+            return (
+              <p key={i}>{rid}</p>)
+          })} */}
+      
       
       {/* <textarea
         placeholder="desc"
@@ -323,98 +248,145 @@ export default function Home() {
         rows={10}
         cols={30}
       /> */}
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="how much you need?" onChange={e => setNewmax(e.target.value)} /><br></br>
-      <label>Please give an image reward for a donor</label><br></br>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="NFT Name" onChange={e => setNFTname(e.target.value)} /><br></br>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="NFT desc" onChange={e => setNFTdesc(e.target.value)} /><br></br>
-      <input type="file" onChange={handleNFTChange} /><br></br>
-      {error1 && <p style={{ color: "red" }}>{error1}</p>}
-      {
-          newNFTimg && (
-            <img className="rounded mt-4" width="350" src={newNFTimg} />
-          )
-        }
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2 w-64" placeholder="how much value can get it?" onChange={e => setRewardv(e.target.value)} />
-      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={postNow}>Post Now</button><br></br>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="PID" onChange={e => setPID(e.target.value)} />
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
-      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={donateNow}>Donate Now</button><br></br>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="PID" onChange={e => setPID1(e.target.value)} />
-      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={getTrans}>Show</button><br></br>
-      <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="block time" onChange={e => setBlocktime(e.target.value)} />
-      <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={getRealtime}>get real time</button>
-      {realTime && <p>{realTime}</p>}
-      <table className="table-auto">
-      <thead>
-        <tr>
-          <th>Index</th>
-          <th>From</th>
-          <th>To</th>
-          <th>Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {allDonors.map((donor, i) => {
-            return (
-              <tr key={i}>
-              <td>{i}</td>
-              <td>{donor.donors}</td>
-              <td>{addressP}</td>
-              <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} ether</td>
-              </tr>)
-          })}
-      </tbody>
-    </table>
+      <div className='container'>
+        <div className='row pb-5'>
+          <div className='col fs-1 fw-bold text-success'>Rank of Donations</div>
+        </div>
+        <div className='row justify-content-center'>
+        <div className='col'>
+        <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Ranking</th>
+                  <th scope="col">Transaction Time</th>
+                  <th scope="col">Donors</th>
+                  <th scope="col">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTrans.map((donor, i) => {
+                    return (
+                      <tr scope="row" key={i}>
+                      <th>{i+1}</th>
+                      <td>{seconds(donor.donortime) >= 1 && seconds(donor.donortime)/60 < 1 && <span>{Math.floor(seconds(donor.donortime)).toString()} minutes ago</span>}
+                      {seconds(donor.donortime)/60 == 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hour ago</span>}
+                      {seconds(donor.donortime)/60 > 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hours ago</span>}
+                      {(seconds(donor.donortime)/60)/24 == 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} day ago</span>}
+                      {(seconds(donor.donortime)/60)/24 >= 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} days ago</span>}</td>
+                      <td><span className='text-truncate'>{donor.donors}</span></td>
+                      <td>{donor.valueofdonors} ether</td>
+                      </tr>)
+                  })}
+              </tbody>
+            </table>
+        </div>
+        </div>
+      </div>
+      
     <ChakraProvider>
-    <Grid templateColumns='repeat(5, 1fr)' gap={3} w = "100%">
-    {allPosts.map((post, i) => {
-            return (
-              <Link href= {`/${i}`} key={i}>
-              <GridItem borderRadius ="md" boxSize="-moz-min-content" bg='silver'>
-                <Image
-                  boxSize="-webkit-fit-content"
-                  objectFit="contain"
-                  src={post.imgurl}
-                  alt={post.title}
-                  borderRadius ="md"
-                />
-                <p>{post.title}</p>
-                <pre>{Web3.utils.hexToAscii(post.desc)}</pre>
-                <p>Posted {Math.floor((((dateNow - new Date(post.posttime * 1000))/ 1000)/ 60)).toString()} minutes ago</p>
-              </GridItem>
-              </Link>)
-          })}
-    </Grid> 
+      <div className='container'>
+        <div className='row pb-5'>
+          <div className='col fs-1 fw-bold text-success'>Donation Posts</div>
+        </div>
+        <div className='row'>
+          <div className='col'>
+            <div className='d-flex w-100 justify-content-end mb-4 mb-md-0'>
+              <div className='w25'>
+                <Select id='filterid' onChange={e => setFilterC(e.target.value)}>
+                  <option value='option1' selected>All Posts</option>
+                  <option value='option2'>Hasn't Reach Target</option>
+                  <option value='option3'>Already Reach Target</option>
+                </Select>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        <div className='row justify-content-center'>
+        {allPosts.map((post, i) => {
+          if(filterC=='option1'){
+              return (
+                
+                <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
+                  <div className='rounded-2 bg-opacity-25 bg-success pt-1 px-2 mb-4'>
+                    <Link className='text-black' href= {`/${i}`}>
+                      <div className='d-flex justify-content-center mb-4 mt-3'>
+                        <div className="center-cropped shadow mw-100 rounded-2">
+                              <img src={post.imgurl} alt={post.title} />
+                          </div>
+                      </div>
+                      
+                      <p className="fw-bold mb-4">{post.title}</p>
+                      <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
+                      {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toFixed(2).toString().replace('.',',')} minutes ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                    </Link>
+                  </div>
+                  
+                </div>)
+                }
+                if(filterC=='option2'){
+                  if(Number(Web3.utils.fromWei(Web3.utils.toBN(Number(post.maxvalue._hex)))) > Number(Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex))))){
+                  return (
+                    
+                    <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
+                      <div className='rounded-2 bg-opacity-25 bg-success pt-1 px-2 mb-4'>
+                        <Link className='text-black' href= {`/${i}`}>
+                          <div className='d-flex justify-content-center mb-4 mt-3'>
+                            <div className="center-cropped shadow mw-100 rounded-2">
+                                  <img src={post.imgurl} alt={post.title} />
+                              </div>
+                          </div>
+                          
+                          <p className="fw-bold mb-4">{post.title}</p>
+                          <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
+                          {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toString().replace('.',',')} minutes ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                          {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                          {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                          {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                          {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                        </Link>
+                      </div>
+                      
+                    </div>)
+                    }
+                    }
+                    if(filterC=='option3'){
+                      if(Number(Web3.utils.fromWei(Web3.utils.toBN(Number(post.maxvalue._hex)))) <= Number(Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex))))){
+                      return (
+                        
+                        <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
+                          <div className='rounded-2 bg-opacity-25 bg-success pt-1 px-2 mb-4'>
+                            <Link className='text-black' href= {`/${i}`}>
+                              <div className='d-flex justify-content-center mb-4 mt-3'>
+                                <div className="center-cropped shadow mw-100 rounded-2">
+                                      <img src={post.imgurl} alt={post.title} />
+                                  </div>
+                              </div>
+                              
+                              <p className="fw-bold mb-4">{post.title}</p>
+                              <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
+                              {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toString().replace('.',',')} minutes ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                              {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                              {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                              {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                              {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                            </Link>
+                          </div>
+                          
+                        </div>)
+                        }
+                        }
+            })}
+        </div>
+      </div>
     </ChakraProvider>
-    <ChakraProvider>
-    <Modal isOpen={isOpen}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Error</ModalHeader>
-          <ModalBody>
-            Please stay in Avalanche Network
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={reloadaja}>
-              Switch Network
-            </Button>
-            <Button variant="ghost">Secondary Action</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      </ChakraProvider></div>)}
-    {networkid != appid && (
-      <div>
-      <Head>
-        <title>Swithing Network</title>
-      </Head>
-      <div>
-        <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
-        
-      </div>
-      </div>
-    )}
+    
+    </div>
+    
       
     </div>
   )

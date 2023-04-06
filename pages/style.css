@@ -1,0 +1,47 @@
+li.nav-item{
+    padding-top: 35px
+}
+.nav-hover-green {
+    -webkit-transition: all 0.5s ease-out;
+    -moz-transition: all 0.5s ease-out;
+    -o-transition: all 0.5s ease-out;
+}
+
+    .nav-hover-green:hover {
+        cursor: pointer;
+        color: green !important;
+    }
+div.center-cropped {
+    width: 250px;
+    height: 200px;
+    overflow: hidden;
+}
+
+    div.center-cropped img {
+        height: 100%;
+        min-width: 100%;
+        left: 50%;
+        position: relative;
+        transform: translateX(-50%);
+    }
+div#donating{
+    width: fit-content;
+}
+#tabletrans{
+    width: 2px;
+}
+@media (max-width: 575.98px) { 
+    .text-truncate{
+        width: 18vw;
+        display: block;
+    }
+}
+@media (min-width: 768px) { 
+    .text-truncate{
+        width: 15vw;
+        display: block;
+    }
+}
+.w25{
+    width: fit-content;
+}

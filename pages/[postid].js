@@ -2,136 +2,95 @@ import Head from 'next/head'
 import { ethers } from "ethers";
 import Web3 from 'web3';
 import { useRouter } from "next/router";
+import {Nav} from "react-bootstrap";
 import { Fragment, useState, useEffect } from 'react';
 import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image  } from '@chakra-ui/react'
 import axios from 'axios'
+import Link from 'next/link'
 import abi from "../abi/Donation.json";
-export default function PostDetail() {
+export default function PostDetail({connect, address, syncW, contractAddress, contractABI}) {
   const appid = 43113;
   const [networkid, setNid] = useState('');
   const [title, setTitle] = useState('');
   const [newDesc, setNewdesc] = useState('');
   const [newMax, setNewmax] = useState('');
   const [nftImg, setnftImg] = useState(null);
+  const [nftowner, setNftowner] = useState('');
   const [dateNow, setDatenow] = useState(null);
   const [veth, setVeth] = useState('');
   const [PID, setPID] = useState('');
   const [PID1, setPID1] = useState('');
-  const [address, setAddress] = useState('');
+  const [donating, setDonating] = useState(false);
   const [addressP, setAddressp] = useState('');
   const [loaded, setLoad] = useState(0);
   const [allPosts, setPosts] = useState([]);
   const [allDonors1, setDonors1] = useState([]);
   const [changed, setChanged] = useState(false);
-  const contractAddress = "0x15A2aEC6308E2b5E21b4c7bBFB3eDe6A2043e835";
-  const contractABI = abi.abi;
+  const [myPosts, setMyposts] = useState(0);
+  const [rewardId, setRewardid] = useState([]);
   const router = useRouter();
   const { postid } = router.query;
   useEffect(() => {
     connect()
       .then(() => {
-        if (address) {
+        if (address && donating == false) {
           const intervalId = setInterval(() => {
             setDatenow(new Date());
-          }, 1000);
-          detectNetwork1(false);
+          }, 500);
           return () => clearInterval(intervalId);
         }
       });
 
-  }, [address, dateNow, networkid]);
+  }, [address, dateNow, donating]);
   useEffect(() => {
     connect()
       .then(() => {
-        if (address && networkid == appid) {
+        if (address) {
           syncD();
         //   getTrans();
         }
       });
 
-  }, [address, networkid]);
-  
-  async function detectNetwork1(rload) {
-    try{
-      const provider = new ethers.providers.Web3Provider(ethereum);
-          const { chainId } = await provider.getNetwork()
-          if (chainId != appid) {
-            if(changed == false){
-              detectNetwork(rload);
-              setChanged(true)
+  }, [address]);
+  useEffect(() => {
+    connect()
+      .then(() => {
+        if (address) {
+          let wavePortalContract;
+          const onNewWave = (syncid, newerpost) => {
+            if(postid == syncid){
+              console.log("NewWave", syncid, newerpost);
+              allPosts[syncid] = newerpost;
+              const wavesCleaned = newerpost.transactions.map(donor => {
+        
+                return {
+                  donortime: donor.donortime,
+                  donors: donor.donors,
+                  valueofdonors: donor.valueofdonors
+                };
+              });
+              setDonors1(wavesCleaned);
             }
+          };
+        
+          if (window.ethereum) {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+        
+            wavePortalContract = new ethers.Contract(contractAddress, contractABI, signer);
+            wavePortalContract.on("NewWave", onNewWave);
           }
-          else{
-            setNid(chainId);
-            setChanged(false);
-          }
-    }
-    catch(err){
-
-    }
-    
-
-  }
-  async function detectNetwork(rload) {
-    try {
-      console.log(networkid)
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const { chainId } = await provider.getNetwork()
-      if (chainId != appid) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: Web3.utils.toHex(appid) }]
-          }).then(() => {
-            if(rload == true){
-              window.location.reload();
+            return () => {
+            if (wavePortalContract) {
+              wavePortalContract.off("NewWave", onNewWave);
             }
-          });
-          
-        } catch (err) {
-            // This error code indicates that the chain has not been added to MetaMask
-          if (err.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [
-                {
-                  chainName: 'Avalanche Testnet C-Chain',
-                  chainId: Web3.utils.toHex(appid),
-                  nativeCurrency: { name: 'Avalanche', decimals: 18, symbol: 'AVAX' },
-                  rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
-                  blockExplorerUrls: ['https://testnet.snowtrace.io/']
-                }
-              ]
-            }).then(() => {
-              if(rload == true){
-                window.location.reload();
-              }
-            });
-          }
+          };
         }
-      }
-      setNid(chainId);
-      console.log(networkid);
-    } catch (err) {
-      console.log(err.message);
-    }
-  }
-  const connect = async () => {
-    const ethereum = window.ethereum;
+      });
 
-    if (!ethereum) {
-      alert('Install MetaMask');
-      return;
-    }
-
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    const address = accounts[0];
-
-    // sign hashed message
-    
-    setAddress(address);
-  }
+  }, []);
   const donateNow = async () => {
+    setDonating(true);
     await connect();
     const ethereum = window.ethereum;
     if (!address) {
@@ -141,6 +100,9 @@ export default function PostDetail() {
     const signer = provider.getSigner();
     const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
     const waveTxn = await dcontract.gotMoney(parseInt(postid), { gasLimit: 300000, value: ethers.utils.parseEther(veth)});
+    await waveTxn.wait();
+    setDonating(false);
+    window.location.reload();
   };
   const postNow = async () => {
     await connect();
@@ -156,34 +118,22 @@ export default function PostDetail() {
     syncD();
   };
   const syncD = async () => {
-    const ethereum = window.ethereum;
     if (!address) {
       return;
     }
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
-    const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-    const waveTxn1 = await dcontract.syncdonation({ gasLimit: 300000});
-    console.log(waveTxn1);
-    setPosts(waveTxn1);
+    const {waveTxn, dcontract} = await syncW();
+    console.log(waveTxn);
+    setPosts(waveTxn);
     console.log(postid);
-    setTitle(waveTxn1[postid].title);
-    const tokenUri = await dcontract.tokenURI(Number(waveTxn1[postid].rewardid._hex))
+    setTitle(waveTxn[postid].title);
+    const tokenUri = await dcontract.tokenURI(Number(waveTxn[postid].rewardid._hex))
+    const rid = await dcontract.ownerOf(Number(waveTxn[postid].rewardid._hex));
     const meta = await axios.get(tokenUri)
     setnftImg(meta.data.image);
     console.log(allPosts);
     console.log(postid);
-    setLoad(1);
-    // console.log(allPosts[parseInt(postid)].transactions)
-  };
-  const liatD = async () => {
-    console.log(allPosts);
-    // console.log(allPosts[parseInt(postid)].transactions)
-  };
-  const getTrans = async () => {
-    
-    await syncD();
-    const wavesCleaned = allPosts[postid].transactions.map(donor => {
+    setNftowner(rid)
+    const wavesCleaned = waveTxn[postid].transactions.map(donor => {
         
       return {
         donortime: donor.donortime,
@@ -191,95 +141,122 @@ export default function PostDetail() {
         valueofdonors: donor.valueofdonors
       };
     });
-    setAddressp(allPosts[postid].provider);
+    setAddressp(waveTxn[postid].provider);
     setDonors1(wavesCleaned);
+    // console.log(allPosts[parseInt(postid)].transactions)
+  };
+  const seconds = (posttime) => {
+    return (((dateNow - new Date(posttime * 1000))/ 1000)/ 60);
+  };
+  const getTrans = async () => {
+    
+    await syncD();
+    
   };
   return (
     <div>
-      {networkid == appid && (
-      <div>
+      <div className='container-fluid'>
       <Head>
         <title>{title}</title>
       </Head>
       <div>
-        <h1 className="text-3xl font-bold underline">
-          Donation DAPP
-        </h1>
         <ChakraProvider>
-        <Grid templateColumns='repeat(5, 1fr)' w = "-webkit-fit-content" paddingTop={"2%"}>
+        <div className='container'>
+          <div className='row'>
+            <div className='col'>
+              <div className='row pb-5'>
+            <div className='col fs-1 fw-bold text-success'>Post Detail</div>
+          </div>
+          <div className='row'>
           {allPosts.map((post, i) => {
-                  if (i == postid){
-                      return (
-                          <GridItem borderRadius ="md" boxSize="-moz-min-content" bg='silver' key={i}>
-                          <Image
-                            boxSize="-webkit-fit-content"
-                            objectFit="contain"
-                            src={post.imgurl}
-                            alt={post.title}
-                            borderRadius ="md"
-                          />
-                          <h2 fontWeight= 'bold'>{post.title}</h2><br></br><br></br>
-                          <pre>{Web3.utils.hexToAscii(post.desc)}</pre>
-                          <p>We need {Number(post.maxvalue._hex)} ethers</p>
-                          <p>We had received {Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex)))} ethers</p>
-                          {post.owned === false && nftImg && (
-                            <div>
-                              <p>If you donate by {Web3.utils.fromWei(Web3.utils.toBN(Number(post.rewardvalue._hex)))} ethers, you will get on bellow NFT</p>
-                              <img className="rounded mt-4" width="350" src={nftImg} />
-                              </div>
-                            )}
-                          {post.owned === true && (
-                            <div>
-                              <br></br>
-                              <p style={{ color: "red" }}>The reward had been owned</p>
-                              <br></br>
-                              </div>
-                            )}
-                          <p>Posted {Math.floor((((dateNow - new Date(post.posttime * 1000))/ 1000)/ 60)).toString()} minutes ago by {post.provider}</p>
-                          </GridItem>)
-                  }
+            if (i == postid){
+                return (
+                  
+                  <div className='col-lg-9 rounded-2 bg-opacity-25 bg-success mx-lg-5 mx-md-3 mx-sm-0 mt-lg-0 mt-sm-4' key={i}>
+                    <Link className='text-black' href= {`/${i}`}>
+                      <div className='d-flex justify-content-center mb-4 mt-4'>
+                      <img src={post.imgurl} alt={post.title} />
+                      </div>
+                      
+                      <div className="fw-bold fs-5">{post.title}</div><br></br><br></br>
+                      <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
+                      <p className='mb-4'>We need {Web3.utils.fromWei(Web3.utils.toBN(Number(post.maxvalue._hex)))} ethers</p>
+                      <p className='mb-4'>We had received {Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex)))} ethers</p>
+                      {post.owned === false && nftImg && (
+                        <div>
+                          <p className='mb-4'>If you donate by {Web3.utils.fromWei(Web3.utils.toBN(Number(post.rewardvalue._hex)))} ethers, you will get on bellow NFT</p>
+                          <img className="rounded mt-4 mb-4" width="350" src={nftImg} />
+                          </div>
+                        )}
+                      {post.owned === true && (
+                        <div>
+                          <p className='mb-4' style={{ color: "red" }}>The reward had been owned by <Link href= {`/reward/${nftowner.toLowerCase()}`}>{nftowner}</Link></p>
+                          <br></br>
+                          </div>
+                        )}
+                      {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toFixed(2).toString().replace('.',',')} minutes ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                    </Link>
+                  </div>)
+            }
               })}
-          </Grid>
-        </ChakraProvider>
-          <input className="pt-4 rounded bg-gray-100 px-3 py-2 my-2" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
-        <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={donateNow}>Donate Now</button><br></br>
-        <button className="pt-4 shadow-md bg-green-500 mt-4 mb-4 text-white font-bold py-2 px-4 rounded" onClick={getTrans}>Show Transaction History</button><br></br>
-        <table className="table-auto">
-        <thead>
-          <tr>
-            <th>Index</th>
-            <th>Transaction Time</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {allDonors1.map((donor, i) => {
-              return (
-                <tr key={i}>
-                <td>{i}</td>
-                <td>{Math.floor((((dateNow - new Date(donor.donortime * 1000))/ 1000)/ 60)).toString()} minutes ago</td>
-                <td>{donor.donors}</td>
-                <td>{addressP}</td>
-                <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} ether</td>
-                </tr>)
-            })}
-        </tbody>
-      </table>
+              <div className='row mt-3'>
+                  <div className='col-sm-4 mx-lg-5 mx-md-3'>
+                    <input className="form-control mb-3" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
+                  </div>
+                  <div className='col-sm-4 mx-lg-4 mx-md-1'>
+                    <button type='button' className="btn btn-success mb-3" onClick={donateNow}>Donate Now</button>
+                  </div>
+                </div>
+          </div>
+            </div>
+            <div className='col mt-5 pt-5'>
+              <table id='tabletrans' className="table mt-5">
+              <thead>
+                <tr>
+                  <th scope="col">Index</th>
+                  <th scope="col">Transaction Time</th>
+                  <th scope="col">From</th>
+                  <th scope="col">To</th>
+                  <th scope="col">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allDonors1.map((donor, i) => {
+                    return (
+                      <tr scope="row" key={i}>
+                      <th>{i}</th>
+                      <td>{seconds(donor.donortime) >= 1 && seconds(donor.donortime)/60 < 1 && <span>{Math.floor(seconds(donor.donortime)).toString()} minutes ago</span>}
+                      {seconds(donor.donortime)/60 == 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hour ago</span>}
+                      {seconds(donor.donortime)/60 > 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hours ago</span>}
+                      {(seconds(donor.donortime)/60)/24 == 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} day ago</span>}
+                      {(seconds(donor.donortime)/60)/24 >= 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} days ago</span>}</td>
+                      <td><span className='text-truncate'>{donor.donors}</span></td>
+                      <td><span className='text-truncate'>{addressP}</span></td>
+                      <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} ether</td>
+                      </tr>)
+                  })}
+              </tbody>
+            </table>
+            </div>
+          </div>
+        
       </div>
-      </div>)}
-      {networkid != appid && (
-      <div>
-      <Head>
-        <title>Swithing Network</title>
-      </Head>
-      <div>
-        <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
+        </ChakraProvider>
+        <form id='donating' className='bg-success bg-opacity-25 d-flex rounded-4'>
+            <div className='container'>
+              
+              
+              
+            </div>
+        </form>
+          <br></br>
         
       </div>
       </div>
-    )}
     </div>
   )
 }
