@@ -38,7 +38,7 @@ div#donating{
 }
 @media (min-width: 768px) { 
     .text-truncate{
-        width: 15vw;
+        width: 11vw;
         display: block;
     }
 }

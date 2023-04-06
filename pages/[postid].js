@@ -207,13 +207,13 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
                   <div className='col-sm-5 mx-lg-5 mx-md-3'>
                     <input className="form-control mb-3" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
                   </div>
-                  <div className='col-sm-4 mx-lg-3 mx-md-1'>
+                  <div className='col-sm-3 mx-lg-1 mx-md-1'>
                     <button type='button' className="btn btn-success mb-3" onClick={donateNow}>Donate Now</button>
                   </div>
                 </div>
           </div>
             </div>
-            <div className='col mt-5 pt-5'>
+            <div className='col w-50 mt-5 pt-5'>
               <table id='tabletrans' className="table mt-5">
               <thead>
                 <tr>
