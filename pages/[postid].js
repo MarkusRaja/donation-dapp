@@ -155,7 +155,7 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
   };
   return (
     <div>
-      <div className='container-fluid'>
+      <div className='container'>
       <Head>
         <title>{title}</title>
       </Head>
@@ -204,10 +204,10 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
             }
               })}
               <div className='row mt-3'>
-                  <div className='col-sm-4 mx-lg-5 mx-md-3'>
+                  <div className='col-sm-5 mx-lg-5 mx-md-3'>
                     <input className="form-control mb-3" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
                   </div>
-                  <div className='col-sm-4 mx-lg-4 mx-md-1'>
+                  <div className='col-sm-4 mx-lg-3 mx-md-1'>
                     <button type='button' className="btn btn-success mb-3" onClick={donateNow}>Donate Now</button>
                   </div>
                 </div>
