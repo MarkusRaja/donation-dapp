@@ -294,7 +294,7 @@ export default function Home({connect, address, syncW}) {
               <div className='w25'>
                 <Select id='filterid' onChange={e => setFilterC(e.target.value)}>
                   <option value='option1' selected>All Posts</option>
-                  <option value='option2'>Hasn't Reach Target</option>
+                  <option value='option2'>Hasn&apos;t Reach Target</option>
                   <option value='option3'>Already Reach Target</option>
                 </Select>
               </div>
