@@ -218,7 +218,7 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
               <thead>
                 <tr>
                   <th scope="col">Index</th>
-                  <th scope="col">Transaction Time</th>
+                  <th scope="col">Time</th>
                   <th scope="col">From</th>
                   <th scope="col">To</th>
                   <th scope="col">Amount</th>
@@ -229,11 +229,11 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
                     return (
                       <tr scope="row" key={i}>
                       <th>{i}</th>
-                      <td>{seconds(donor.donortime) >= 1 && seconds(donor.donortime)/60 < 1 && <span>{Math.floor(seconds(donor.donortime)).toString()} minutes ago</span>}
+                      <td><span className='text-truncate'>{seconds(donor.donortime) >= 1 && seconds(donor.donortime)/60 < 1 && <span>{Math.floor(seconds(donor.donortime)).toString()} minutes ago</span>}
                       {seconds(donor.donortime)/60 == 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hour ago</span>}
                       {seconds(donor.donortime)/60 > 1 && (seconds(donor.donortime)/60)/24 < 1 && <span>{Math.floor(seconds(donor.donortime)/60).toString()} hours ago</span>}
                       {(seconds(donor.donortime)/60)/24 == 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} day ago</span>}
-                      {(seconds(donor.donortime)/60)/24 >= 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} days ago</span>}</td>
+                      {(seconds(donor.donortime)/60)/24 >= 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} days ago</span>}</span></td>
                       <td><span className='text-truncate'>{donor.donors}</span></td>
                       <td><span className='text-truncate'>{addressP}</span></td>
                       <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} ether</td>

@@ -32,7 +32,7 @@ div#donating{
 }
 @media (max-width: 575.98px) { 
     .text-truncate{
-        width: 18vw;
+        width: 15vw;
         display: block;
     }
 }
