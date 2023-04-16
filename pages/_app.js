@@ -118,6 +118,24 @@ export default function App({ Component, pageProps }) {
       console.log(err.message);
     }
   }
+  async function switchN() {
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const { chainId } = await provider.getNetwork()
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [
+        {
+          chainName: 'Avalanche Testnet C-Chain',
+          chainId: Web3.utils.toHex(appid),
+          nativeCurrency: { name: 'Avalanche', decimals: 18, symbol: 'AVAX' },
+          rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+          blockExplorerUrls: ['https://testnet.snowtrace.io/']
+        }
+      ]
+    }).then(() => {
+      setNid(chainId);
+    });
+  }
   useEffect(() => {
     import('bootstrap/dist/js/bootstrap');
   }, []);
@@ -186,7 +204,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div>
         <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
-        <button type='button' className="btn btn-success mb-3" onClick={detectNetwork(false)}>Switch Now</button>
+        <button type='button' className="btn btn-success mb-3" onClick={switchN}>Switch Now</button>
         <div>{networkid}</div>
       </div>
       </div>
