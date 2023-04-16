@@ -11,7 +11,8 @@ import {connectD, fetchD} from "../services/aio";
 import { Fragment, useState, useEffect } from 'react';
 export default function App({ Component, pageProps }) {
   const appid = 43113;
-  const contractAddress = "0x8eB3016E6EEf87711FcF36098C7D513711EC8b5C";
+  const currencyD = "AVAX";
+  const contractAddress = "0x4003C8D1CcD6A30D97E9622642e4C0CF51fbd920";
   const contractABI = abi.abi;
   const [address, setAddress] = useState('');
   const [myPosts, setMyposts] = useState(0);
@@ -196,7 +197,7 @@ export default function App({ Component, pageProps }) {
                   </div>
               </div>
           </Nav>
-        <Component {...pageProps} connect={connect} address={address} syncW={syncW} contractAddress={contractAddress} contractABI={contractABI} />
+        <Component {...pageProps} connect={connect} address={address} syncW={syncW} contractAddress={contractAddress} contractABI={contractABI} currencyD={currencyD} />
         </div>
       )}
       {networkid != appid && (

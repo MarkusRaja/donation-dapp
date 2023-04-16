@@ -8,7 +8,7 @@ import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFo
 import axios from 'axios'
 import Link from 'next/link'
 import abi from "../abi/Donation.json";
-export default function PostDetail({connect, address, syncW, contractAddress, contractABI}) {
+export default function PostDetail({connect, address, syncW, contractAddress, contractABI, currencyD}) {
   const appid = 43113;
   const [networkid, setNid] = useState('');
   const [title, setTitle] = useState('');
@@ -180,11 +180,11 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
                       
                       <div className="fw-bold fs-5">{post.title}</div><br></br><br></br>
                       <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
-                      <p className='mb-4'>We need {Web3.utils.fromWei(Web3.utils.toBN(Number(post.maxvalue._hex)))} ethers</p>
-                      <p className='mb-4'>We had received {Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex)))} ethers</p>
+                      <p className='mb-4'>We need {Web3.utils.fromWei(Web3.utils.toBN(Number(post.maxvalue._hex)))} {currencyD}</p>
+                      <p className='mb-4'>We had received {Web3.utils.fromWei(Web3.utils.toBN(Number(post.currvalue._hex)))} {currencyD}</p>
                       {post.owned === false && nftImg && (
                         <div>
-                          <p className='mb-4'>If you donate by {Web3.utils.fromWei(Web3.utils.toBN(Number(post.rewardvalue._hex)))} ethers, you will get on bellow NFT</p>
+                          <p className='mb-4'>If you donate by {Web3.utils.fromWei(Web3.utils.toBN(Number(post.rewardvalue._hex)))} {currencyD}, you will get on bellow NFT</p>
                           <img className="rounded mt-4 mb-4" width="350" src={nftImg} />
                           </div>
                         )}
@@ -205,7 +205,7 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
               })}
               <div className='row mt-3'>
                   <div className='col-sm-5 mx-lg-5 mx-md-3'>
-                    <input className="form-control mb-3" placeholder="Value of donate in ETH" onChange={e => setVeth(e.target.value)} />
+                    <input className="form-control mb-3" placeholder={"Value of donate in "+ currencyD} onChange={e => setVeth(e.target.value)} />
                   </div>
                   <div className='col-sm-3 mx-lg-1 mx-md-1'>
                     <button type='button' className="btn btn-success mb-3" onClick={donateNow}>Donate Now</button>
@@ -236,7 +236,7 @@ export default function PostDetail({connect, address, syncW, contractAddress, co
                       {(seconds(donor.donortime)/60)/24 >= 1 && <span>{Math.floor((seconds(donor.donortime)/60)/24).toString()} days ago</span>}</span></td>
                       <td><span className='text-truncate'>{donor.donors}</span></td>
                       <td><span className='text-truncate'>{addressP}</span></td>
-                      <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} ether</td>
+                      <td>{Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex)))} {currencyD}</td>
                       </tr>)
                   })}
               </tbody>

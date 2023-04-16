@@ -20,7 +20,7 @@ const client = ipfsHttpClient({
     authorization: auth
   }
 })
-export default function CreatePost({connect, address, syncW, contractAddress, contractABI}) {
+export default function CreatePost({connect, address, syncW, contractAddress, contractABI, currencyD}) {
   const appid = 43113;
   const [isOpen, setIsOpen] = useState(false);
   const handleOpen = () => setIsOpen(true);
@@ -68,6 +68,9 @@ export default function CreatePost({connect, address, syncW, contractAddress, co
     const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
     const waveTxn = await dcontract.gotMoney(parseInt(PID), { gasLimit: 300000, value: ethers.utils.parseEther(veth)});
   };
+  const increaseGasLimit = (estimatedGasLimit) => {
+    return estimatedGasLimit.mul(130).div(100) // increase by 30%
+  }
   const postNow = async () => {
     await connect();
     const ethereum = window.ethereum;
@@ -91,7 +94,8 @@ export default function CreatePost({connect, address, syncW, contractAddress, co
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
       const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-      const waveTxn = await dcontract.createpost(newtitle, newPostimg, Web3.utils.asciiToHex(newDesc), Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newMax, 'ether')), 64), url, Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newRewardv, 'ether')), 64), { gasLimit: 800000});
+      const estimatedGas = await dcontract.estimateGas.createpost(newtitle, newPostimg, Web3.utils.asciiToHex(newDesc), Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newMax, 'ether')), 64), url, Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newRewardv, 'ether')), 64))
+      const waveTxn = await dcontract.createpost(newtitle, newPostimg, Web3.utils.asciiToHex(newDesc), Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newMax, 'ether')), 64), url, Web3.utils.padLeft(Web3.utils.toHex(Web3.utils.toWei(newRewardv, 'ether')), 64), { gasLimit: increaseGasLimit(estimatedGas)});
       await waveTxn.wait();
       window.location.href = '/';
       syncD();
@@ -234,7 +238,7 @@ export default function CreatePost({connect, address, syncW, contractAddress, co
                 rows={10}
                 cols={30}
             /><br></br>
-            <input className="form-control mb-3" placeholder="how much eth value you need?" onChange={e => setNewmax(e.target.value)} /><br></br>
+            <input className="form-control mb-3" placeholder={"how much "+currencyD.toLowerCase()+" value you need?"} onChange={e => setNewmax(e.target.value)} /><br></br>
             <label>Please give an image reward for a donor</label><br></br>
             <input className="form-control mb-3" placeholder="NFT Name" onChange={e => setNFTname(e.target.value)} /><br></br>
             <input className="form-control mb-3" placeholder="NFT desc" onChange={e => setNFTdesc(e.target.value)} /><br></br>
@@ -245,7 +249,7 @@ export default function CreatePost({connect, address, syncW, contractAddress, co
                     <img className="rounded mt-4 mb-3" width="350" src={newNFTimg} />
                 )
                 }
-            <input className="form-control mb-3" placeholder="how much eth value can get it?" onChange={e => setRewardv(e.target.value)} />
+            <input className="form-control mb-3" placeholder={"how much "+currencyD.toLowerCase()+" value can get it?"} onChange={e => setRewardv(e.target.value)} />
             <div className='d-flex justify-content-end'>
                 <button type='button' className="btn btn-success mb-3" onClick={postNow}>Post Now</button>
             </div>

@@ -132,32 +132,33 @@ export default function ListPosts({connect, address, syncW, contractAddress, con
               {address != qaddress && myPosts == 1 && <div className="col fs-1 fw-bold text-success">The Post of {qaddress}</div>}
             </div>
             <div className='row justify-content-center'>
-            {allPosts.map((post, i) => {
+            {allPosts.length > 0 && allPosts.map((post, i) => {
               if(post.provider.toLowerCase() === qaddress){
-                  return (
+                return (
+                
+                  <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
+                    <div className='rounded-2 bg-opacity-25 bg-success pt-1 px-2 mb-4'>
+                      <Link className='text-black' href= {`/${i}`}>
+                        <div className='d-flex justify-content-center mb-4 mt-3'>
+                          <div className="center-cropped shadow mw-100 rounded-2">
+                                <img src={post.imgurl} alt={post.title} />
+                            </div>
+                        </div>
+                        
+                        <p id='titlehl' className="text-truncate fw-bold mb-4">{post.title}</p>
+                        <pre id='deschl' className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
+                        {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toFixed(2).toString().replace('.',',')} minutes ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                        {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                        {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                        {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                        {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago by <Link href= {`/posts/${post.provider.toLowerCase()}`}>{post.provider}</Link></p>}
+                      </Link>
+                    </div>
                     
-                    <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
-                      <div className='rounded-2 bg-opacity-25 bg-success pt-1 px-2 mb-4'>
-                        <Link className='text-black' href= {`/${i}`}>
-                          <div className='d-flex justify-content-center mb-4 mt-3'>
-                            <div className="center-cropped shadow mw-100 rounded-2">
-                                  <img src={post.imgurl} alt={post.title} />
-                              </div>
-                          </div>
-                          
-                          <p className="fw-bold mb-4">{post.title}</p>
-                          <pre className='mb-4'>{Web3.utils.hexToAscii(post.desc)}</pre>
-                          {seconds(post.posttime) >= 1 && seconds(post.posttime)/60 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)).toString().replace('.',',')} minutes ago</p>}
-                          {seconds(post.posttime)/60 == 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {Math.floor(seconds(post.posttime)/60).toString()} hour ago</p>}
-                          {seconds(post.posttime)/60 > 1 && (seconds(post.posttime)/60)/24 < 1 && <p className='mb-4'>Posted {(seconds(post.posttime)/60).toFixed(2).toString().replace('.',',')} hours ago</p>}
-                          {(seconds(post.posttime)/60)/24 == 1 && <p className='mb-4'>Posted {Math.floor((seconds(post.posttime)/60)/24).toString()} day ago</p>}
-                          {(seconds(post.posttime)/60)/24 >= 1 && <p className='mb-4'>Posted {((seconds(post.posttime)/60)/24).toFixed(2).toString().replace('.',',')} days ago</p>}
-                        </Link>
-                      </div>
-                      
-                    </div>)
+                  </div>)
               }
                 })}
+              {allPosts.length == 0 && <div id='emptystatement' className='w-100 text-center fs-3'>No Post</div>}
             </div>
           </div>
         </ChakraProvider>

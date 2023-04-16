@@ -135,7 +135,7 @@ export default function ListRewards({connect, address, syncW, contractAddress, c
             {address != qaddress && rewardId.length == 1 && <div className="col fs-1 fw-bold text-success">The Reward of {qaddress}</div>}
           </div>
           <div className='row justify-content-center'>
-          {rewardId.map((nft, i) => {
+          {rewardId.length > 0 && rewardId.map((nft, i) => {
                 return (
                   
                   <div className='col-lg-3 mx-lg-3 mx-md-3 mx-sm-0 mt-sm-4' key={i}>
@@ -155,6 +155,7 @@ export default function ListRewards({connect, address, syncW, contractAddress, c
                     
                   </div>)
               })}
+            {rewardId.length == 0 && <div id='emptystatement' className='w-100 text-center fs-3'>No Reward</div>}
           </div>
         </div>
       </ChakraProvider>
