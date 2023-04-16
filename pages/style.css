@@ -37,6 +37,9 @@ div#donating{
     }
 }
 @media (min-width: 768px) { 
+    #switchN{
+        display: none;
+    }
     .text-truncate{
         width: 11vw;
         display: block;
@@ -44,7 +47,4 @@ div#donating{
 }
 .w25{
     width: fit-content;
-}
-#switchN{
-    display: none;
 }
