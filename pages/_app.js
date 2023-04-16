@@ -2,6 +2,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import '@/styles/globals.css'
 import './style.css'
 import Link from 'next/link'
+import Web3 from 'web3';
 import {Nav} from "react-bootstrap";
 import Head from 'next/head'
 import abi from "../abi/Donation.json";
@@ -57,8 +58,9 @@ export default function App({ Component, pageProps }) {
           const { chainId } = await provider.getNetwork()
           if (chainId != appid) {
             if(changed == false){
-              detectNetwork(rload);
-              setChanged(true)
+              const changeN = await detectNetwork(rload);
+              await changeN.wait();
+              setChanged(true);
             }
           }
           else{
@@ -184,8 +186,6 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div>
         <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
-        <div>{networkid}</div>
-        <div>{appid}</div>
         
       </div>
       </div>
