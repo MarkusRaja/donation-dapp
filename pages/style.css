@@ -45,3 +45,6 @@ div#donating{
 .w25{
     width: fit-content;
 }
+#switchN{
+    display: none;
+}

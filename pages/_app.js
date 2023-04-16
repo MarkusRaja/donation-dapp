@@ -93,6 +93,7 @@ export default function App({ Component, pageProps }) {
         } catch (err) {
             // This error code indicates that the chain has not been added to MetaMask
           if (err.code === 4902) {
+            document.getElementById("switchN").style.display = "block";
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [
@@ -204,7 +205,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div>
         <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
-        <button type='button' className="btn btn-success mb-3" onClick={switchN}>Switch Now</button>
+        <button id='switchN' type='button' className="btn btn-success mb-3" onClick={switchN}>Add Network</button>
         <div>{networkid}</div>
       </div>
       </div>
