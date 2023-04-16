@@ -187,6 +187,7 @@ export default function App({ Component, pageProps }) {
       <div>
         <h1>PLEASE CLICK SWITCH NETWORK ON METAMASK POP UP WINDOW</h1>
         <button type='button' className="btn btn-success mb-3" onClick={detectNetwork(false)}>Switch Now</button>
+        <div>{networkid}</div>
       </div>
       </div>
     )}
