@@ -135,6 +135,7 @@ export default function App({ Component, pageProps }) {
       ]
     }).then(() => {
       setNid(chainId);
+      window.location.reload();
     });
   }
   useEffect(() => {
