@@ -12,7 +12,7 @@ import { Fragment, useState, useEffect } from 'react';
 export default function App({ Component, pageProps }) {
   const appid = 43113;
   const currencyD = "AVAX";
-  const contractAddress = "0xa31F1094EBeca416eb41a8dC399DA88515c2a274";
+  const contractAddress = "0xfACEaA6326Faaa3e41a9209f3a76a7Cd29d4550b";
   const contractABI = abi.abi;
   const [address, setAddress] = useState('');
   const [myPosts, setMyposts] = useState(0);
