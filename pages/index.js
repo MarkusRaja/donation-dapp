@@ -1,10 +1,26 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import Dropdown from "react-bootstrap/Dropdown";
+import { getDefaultProvider, ethers } from "ethers";
 import Web3 from 'web3';
-import { useState, useEffect } from 'react';
-import { ChakraProvider, Select  } from '@chakra-ui/react'
+import {connectD, fetchD, detectNetwork1} from "../services/aio";
+import { Fragment, useState, useEffect } from 'react';
+import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image, Select  } from '@chakra-ui/react'
+import { create as ipfsHttpClient } from 'ipfs-http-client'
+
+const projectId = '2J5pUVzx4zKsQTgwnAYsE6MVObL'
+const projectSecret = 'f41fe913f0ae1ea7c45c0d36caace45a'
+const auth = 'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
+const client = ipfsHttpClient({
+  host: 'ipfs.infura.io',
+  port: 5001,
+  protocol: 'https',
+  apiPath: '/api/v0',
+  headers: {
+    authorization: auth
+  }
+})
 export default function Home({connect, address, syncW, currencyD}) {
-  
   const [filterC, setFilterC] = useState('option1');
   const [allPosts, setPosts] = useState([]);
   const [dateNow, setDatenow] = useState(null);
@@ -38,6 +54,15 @@ export default function Home({connect, address, syncW, currencyD}) {
     }
     const {waveTxn} = await syncW();
     var trans = [];
+    const wavesCleaned = waveTxn.map(post => {
+      const wavesaja = post.transactions.map(donor => {
+        return trans.push({
+          donors: donor.donors,
+          donortime: donor.donortime,
+          valueofdonors: Number(Web3.utils.fromWei(Web3.utils.toBN(Number(donor.valueofdonors._hex))))
+        });
+      });
+    });
     trans = trans.sort((a, b) => {
       if (a.valueofdonors > b.valueofdonors) {
         return -1;
