@@ -66,7 +66,7 @@ export default function ListPosts({connect, address, syncW}) {
               {address != qaddress && myPosts <= 1 && <div className="col fs-1 fw-bold text-success">The Post of {qaddress}</div>}
             </div>
             <div className='row justify-content-center'>
-            {allPosts.length > 0 && allPosts.map((post, i) => {
+            {myPosts > 0 && allPosts.map((post, i) => {
               if(post.provider.toLowerCase() === qaddress){
                 return (
                 
@@ -92,7 +92,7 @@ export default function ListPosts({connect, address, syncW}) {
                   </div>)
               }
                 })}
-              {allPosts.length == 0 && <div id='emptystatement' className='w-100 text-center fs-3'>No Post</div>}
+              {myPosts == 0 && <div id='emptystatement' className='w-100 text-center fs-3'>No Post</div>}
             </div>
           </div>
         </ChakraProvider>
