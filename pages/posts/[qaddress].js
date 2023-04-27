@@ -39,7 +39,7 @@ export default function ListPosts({connect, address, syncW}) {
     const {cpost, waveTxn} = await syncW();
     setMyposts(cpost);
     if(address != qaddress){
-      const {cpost} = countQadd();
+      const {cpost} = await countQadd();
       setMyposts(cpost);
     }
     setPosts(waveTxn);
