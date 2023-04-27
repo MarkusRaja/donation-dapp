@@ -3,7 +3,7 @@ import Web3 from 'web3';
 import { useRouter } from "next/router";
 import { useState, useEffect } from 'react';
 import { ChakraProvider} from '@chakra-ui/react'
-import {countQadd} from "../services/aio";
+import {countQadd} from "../../services/aio";
 import Link from 'next/link'
 export default function ListPosts({connect, address, syncW}) {
   const [dateNow, setDatenow] = useState(null);
