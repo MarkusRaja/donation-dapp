@@ -52,7 +52,7 @@ export default function ListPosts({connect, address, syncW}) {
       <div>
       <Head>
         {address == qaddress && myPosts > 1 && <title>Your Posts</title>}
-        {address == qaddress && myPosts == 1 && <title>Your Post</title>}
+        {address == qaddress && myPosts <= 1 && <title>Your Post</title>}
         {address != qaddress && myPosts > 1 && <title>List Posts</title>}
         {address != qaddress && myPosts <= 1 && <title>The Post</title>}
       </Head>
@@ -61,7 +61,7 @@ export default function ListPosts({connect, address, syncW}) {
           <div className='container'>
             <div className='row pb-5'>
               {address == qaddress && myPosts > 1 && <div className="col fs-1 fw-bold text-success">Your Posts</div>}
-              {address == qaddress && myPosts == 1 && <div className="col fs-1 fw-bold text-success">Your Post</div>}
+              {address == qaddress && myPosts <= 1 && <div className="col fs-1 fw-bold text-success">Your Post</div>}
               {address != qaddress && myPosts > 1 && <div className="col fs-1 fw-bold text-success">List Posts of {qaddress}</div>}
               {address != qaddress && myPosts <= 1 && <div className="col fs-1 fw-bold text-success">The Post of {qaddress}</div>}
             </div>
