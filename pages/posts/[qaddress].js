@@ -1,30 +1,14 @@
 import Head from 'next/head'
-import { ethers } from "ethers";
 import Web3 from 'web3';
 import { useRouter } from "next/router";
-import { Fragment, useState, useEffect } from 'react';
-import { Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ChakraProvider, Image  } from '@chakra-ui/react'
-import axios from 'axios'
+import { useState, useEffect } from 'react';
+import { ChakraProvider} from '@chakra-ui/react'
+import {countQadd} from "../services/aio";
 import Link from 'next/link'
-import abi from "../../abi/Donation.json";
-export default function ListPosts({connect, address, syncW, contractAddress, contractABI}) {
-  const appid = 43113;
-  const [networkid, setNid] = useState('');
-  const [title, setTitle] = useState('');
-  const [newDesc, setNewdesc] = useState('');
-  const [newMax, setNewmax] = useState('');
-  const [nftImg, setnftImg] = useState(null);
+export default function ListPosts({connect, address, syncW}) {
   const [dateNow, setDatenow] = useState(null);
-  const [veth, setVeth] = useState('');
-  const [PID, setPID] = useState('');
-  const [PID1, setPID1] = useState('');
-  const [addressP, setAddressp] = useState('');
-  const [loaded, setLoad] = useState(0);
-  const [rewardId, setRewardid] = useState([]);
   const [allPosts, setPosts] = useState([]);
   const [myPosts, setMyposts] = useState(0);
-  const [allDonors1, setDonors1] = useState([]);
-  const [changed, setChanged] = useState(false);
   const router = useRouter();
   const { qaddress } = router.query;
   useEffect(() => {
@@ -44,71 +28,21 @@ export default function ListPosts({connect, address, syncW, contractAddress, con
       .then(() => {
         if (address) {
           syncD();
-        //   getTrans();
         }
       });
 
   }, [address]);
-  const donateNow = async () => {
-    await connect();
-    const ethereum = window.ethereum;
-    if (!address) {
-      return;
-    }
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
-    const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-    const waveTxn = await dcontract.gotMoney(parseInt(postid), { gasLimit: 300000, value: ethers.utils.parseEther(veth)});
-  };
-  const postNow = async () => {
-    await connect();
-    const ethereum = window.ethereum;
-    if (!address) {
-      return;
-    }
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
-    const dcontract = new ethers.Contract(contractAddress, contractABI, signer);
-    const waveTxn = await dcontract.createpost(newtitle, newDesc, parseInt(newMax), { gasLimit: 300000});
-    await waveTxn.wait();
-    syncD();
-  };
   const syncD = async () => {
     if (!address) {
       return;
     }
     const {cpost, waveTxn} = await syncW();
     setMyposts(cpost);
+    if(address != qaddress){
+      const {cpost} = countQadd();
+      setMyposts(cpost);
+    }
     setPosts(waveTxn);
-    
-
-
-    // console.log(postid);
-    // setTitle(waveTxn1[postid].title);
-    // const tokenUri = await dcontract.tokenURI(Number(waveTxn1[postid].rewardid._hex))
-    // const meta = await axios.get(tokenUri)
-    // setnftImg(meta.data.image);
-    // console.log(allPosts);
-    // console.log(postid);
-    // console.log(allPosts[parseInt(postid)].transactions)
-  };
-  const liatD = async () => {
-    console.log(rewardId);
-    // console.log(allPosts[parseInt(postid)].transactions)
-  };
-  const getTrans = async () => {
-    
-    await syncD();
-    const wavesCleaned = allPosts[postid].transactions.map(donor => {
-        
-      return {
-        donortime: donor.donortime,
-        donors: donor.donors,
-        valueofdonors: donor.valueofdonors
-      };
-    });
-    setAddressp(allPosts[postid].provider);
-    setDonors1(wavesCleaned);
   };
   const seconds = (posttime) => {
     return (((dateNow - new Date(posttime * 1000))/ 1000)/ 60);
@@ -120,7 +54,7 @@ export default function ListPosts({connect, address, syncW, contractAddress, con
         {address == qaddress && myPosts > 1 && <title>Your Posts</title>}
         {address == qaddress && myPosts == 1 && <title>Your Post</title>}
         {address != qaddress && myPosts > 1 && <title>List Posts</title>}
-        {address != qaddress && myPosts == 1 && <title>The Post</title>}
+        {address != qaddress && myPosts <= 1 && <title>The Post</title>}
       </Head>
       <div>
       <ChakraProvider>
@@ -129,7 +63,7 @@ export default function ListPosts({connect, address, syncW, contractAddress, con
               {address == qaddress && myPosts > 1 && <div className="col fs-1 fw-bold text-success">Your Posts</div>}
               {address == qaddress && myPosts == 1 && <div className="col fs-1 fw-bold text-success">Your Post</div>}
               {address != qaddress && myPosts > 1 && <div className="col fs-1 fw-bold text-success">List Posts of {qaddress}</div>}
-              {address != qaddress && myPosts == 1 && <div className="col fs-1 fw-bold text-success">The Post of {qaddress}</div>}
+              {address != qaddress && myPosts <= 1 && <div className="col fs-1 fw-bold text-success">The Post of {qaddress}</div>}
             </div>
             <div className='row justify-content-center'>
             {allPosts.length > 0 && allPosts.map((post, i) => {

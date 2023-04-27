@@ -22,4 +22,14 @@ const connectD = async () => {
     
     return address;
   }
-export {connectD, fetchD};
+  const countQadd = async (qaddress, waveTxn) => {
+    const cpost = waveTxn.reduce((count, data) => {
+      if (data.provider.toLowerCase() === qaddress) {
+        return count + 1;
+      } else {
+        return count;
+      }
+    }, 0);
+    return {cpost, tokenIds};
+  }
+export {connectD, fetchD, countQadd};

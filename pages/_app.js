@@ -8,7 +8,7 @@ import Head from 'next/head'
 import abi from "../abi/Donation.json";
 import { ethers } from "ethers";
 import {connectD, fetchD} from "../services/aio";
-import { Fragment, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 export default function App({ Component, pageProps }) {
   const appid = 43113;
   const currencyD = "AVAX";
@@ -16,14 +16,11 @@ export default function App({ Component, pageProps }) {
   const contractABI = abi.abi;
   const [address, setAddress] = useState('');
   const [myPosts, setMyposts] = useState(0);
-  const [allPosts, setPosts] = useState([]);
   const [rewardId, setRewardid] = useState([]);
   const [changed, setChanged] = useState(false);
   const [networkid, setNid] = useState('');
   const connect = async () => {
     const address1 = await connectD();
-
-    // sign hashed message
     
     setAddress(address1);
   }
@@ -92,7 +89,6 @@ export default function App({ Component, pageProps }) {
           });
           
         } catch (err) {
-            // This error code indicates that the chain has not been added to MetaMask
           if (err.code === 4902) {
             document.getElementById("switchN").style.display = "block";
             await window.ethereum.request({

@@ -123,7 +123,7 @@ export default function ListRewards({connect, address, syncW, contractAddress, c
         {address == qaddress && rewardId.length > 1 && <title>Your Rewards</title>}
         {address == qaddress && rewardId.length == 1 && <title>Your Reward</title>}
         {address != qaddress && rewardId.length > 1 && <title>List Rewards</title>}
-        {address != qaddress && rewardId.length == 1 && <title>The Reward</title>}
+        {address != qaddress && rewardId.length <= 1 && <title>The Reward</title>}
       </Head>
       <div>
       <ChakraProvider>
@@ -132,7 +132,7 @@ export default function ListRewards({connect, address, syncW, contractAddress, c
             {address == qaddress && rewardId.length > 1 && <div className="col fs-1 fw-bold text-success">Your Rewards</div>}
             {address == qaddress && rewardId.length == 1 && <div className="col fs-1 fw-bold text-success">Your Reward</div>}
             {address != qaddress && rewardId.length > 1 && <div className="col fs-1 fw-bold text-success">List Rewards of {qaddress}</div>}
-            {address != qaddress && rewardId.length == 1 && <div className="col fs-1 fw-bold text-success">The Reward of {qaddress}</div>}
+            {address != qaddress && rewardId.length <= 1 && <div className="col fs-1 fw-bold text-success">The Reward of {qaddress}</div>}
           </div>
           <div className='row justify-content-center'>
           {rewardId.length > 0 && rewardId.map((nft, i) => {
